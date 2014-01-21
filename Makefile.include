@@ -1,0 +1,74 @@
+NATIVE_BUILD=0
+USE_BUILDROOT=0
+
+ifeq ($(NATIVE_BUILD),1)
+FLOAT=hard
+BUILDROOT	:= .
+TARGETFS	:=usr/local
+TOOLCHAIN	:=/usr/
+LD		:= $(TOOLCHAIN)/bin/ld
+CC		:= $(TOOLCHAIN)/bin/gcca 
+CXX       	:= $(TOOLCHAIN)/bin/g++-4.7
+OBJDUMP		:= $(TOOLCHAIN)/bin/objdump
+RANLIB		:= $(TOOLCHAIN)/bin/ranlib
+STRIP		:= $(TOOLCHAIN)/bin/strip
+AR		:= $(TOOLCHAIN)/bin/ar
+CXXCP 		:= $(CXX) -E
+
+VCROOT	:= /opt/vc
+
+INCLUDES	+= -I$(VCROOT)/include/interface/vcos/pthreads \
+			-I$(VCROOT)/include \
+			-I$(VCROOT)/include/interface/vmcs_host \
+			-I$(VCROOT)/include/interface/vmcs_host/linux \
+			-I$(BUILDROOT)/ffmpeg \
+			-I$(BUILDROOT)/ffmpeg_compiled/usr/local/include \
+			-I/usr/include/freetype2 \
+			-I/usr/include\
+			-I$(BUILDROOT)/usr/local/include
+LDFLAGS			+= -L/lib -L/usr/lib -L$(VCROOT)/lib
+
+else
+# Cross-compiling
+
+FLOAT=hard
+
+ifeq ($(USE_BUILDROOT), 1)
+BUILDROOT	:=/home/erwan/rpi/nfs
+SDKSTAGE	:=$(BUILDROOT)
+TARGETFS	:=$(BUILDROOT)
+TOOLCHAIN	:=/usr/local/bcm-gcc/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian
+HOST			:=arm-linux-gnueabihf
+SYSROOT		:=$(BUILDROOT)
+else
+BUILDROOT	:=/home/erwan/rpi/nfs
+SDKSTAGE	:=$(BUILDROOT)
+TARGETFS	:=$(BUILDROOT)
+TOOLCHAIN	:=/usr/local/bcm-gcc/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian
+HOST			:=arm-linux-gnueabihf
+SYSROOT		:=$(BUILDROOT)
+endif
+
+VCROOT	:= 
+JOBS=7
+
+CFLAGS			:= -isystem$(PREFIX)/include
+CXXFLAGS		:= $(CFLAGS)
+CPPFLAGS		:= $(CFLAGS)
+LDFLAGS			:= -L$(BUILDROOT)/lib
+LD					:= $(TOOLCHAIN)/bin/$(HOST)-ld --sysroot=$(SYSROOT)
+CC					:= $(TOOLCHAIN)/bin/$(HOST)-gcc --sysroot=$(SYSROOT)
+CXX         := $(TOOLCHAIN)/bin/$(HOST)-g++ --sysroot=$(SYSROOT)
+OBJDUMP			:= $(TOOLCHAIN)/bin/$(HOST)-objdump
+RANLIB			:= $(TOOLCHAIN)/bin/$(HOST)-ranlib
+STRIP				:= $(TOOLCHAIN)/bin/$(HOST)-strip
+AR 					:= $(TOOLCHAIN)/bin/$(HOST)-ar
+CXXCP 			:= $(CXX) -E
+PATH 				:= $(PREFIX)/bin:$(BUILDROOT)/output/host/usr/bin:$(PATH)
+
+INCLUDES		+= -isystem$(SDKSTAGE)/usr/include -isystem$(SDKSTAGE)/opt/vc/include -isystem$(SYSROOT)/usr/include -isystem$(SDKSTAGE)/opt/vc/include/interface/vcos/pthreads -isystem$(SDKSTAGE)/usr/include/freetype2 -isystem$(SDKSTAGE)/opt/vc/include/interface/vmcs_host/linux -isystem$(SYSROOT)/usr/local/include
+LDFLAGS			+= -L$(SDKSTAGE)/lib -L$(SDKSTAGE)/usr/lib -L$(SDKSTAGE)/opt/vc/lib/
+
+endif
+
+CFLAGS += -pipe -mfloat-abi=$(FLOAT) -mcpu=arm1176jzf-s -fomit-frame-pointer -mabi=aapcs-linux -mtune=arm1176jzf-s -mfpu=vfp -Wno-psabi -mno-apcs-stack-check -O3 -mstructure-size-boundary=32 -mno-sched-prolog
