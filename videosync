@@ -5,7 +5,7 @@
 
 thisdir=`dirname $0`
 
-OMXPLAYER="$thisdir/pwomxplayer.bin"
+OMXPLAYER="$thisdir/videosync.bin"
 FBSET="/usr/sbin/fbset"
 FONT="fonts/FreeSans.ttf"
 

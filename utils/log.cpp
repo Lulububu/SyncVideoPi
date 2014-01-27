@@ -144,8 +144,8 @@ bool CLog::Init(const char* path)
   {
     CStdString strLogFile, strLogFileOld;
 
-    strLogFile.Format("omxplayer.log", path);
-    strLogFileOld.Format("omxplayer.old.log", path);
+    strLogFile.Format("videosync.log", path);
+    strLogFileOld.Format("videosync.old.log", path);
 
     struct stat info;
     if (stat(strLogFileOld.c_str(),&info) == 0 &&

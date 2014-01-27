@@ -1,3 +1,7 @@
+#ifndef TIMER_H
+#define TIMER_H
+
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
@@ -20,3 +24,4 @@ private:
   
 };
 
+#endif

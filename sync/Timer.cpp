@@ -42,7 +42,7 @@ bool Timer::SleepUntilTime(time_t target)
         gettimeofday(&now, NULL); 
         diff = difftime(target, now.tv_sec);
 
-        while(diff > 0 && running)
+        while(diff >= 0 && running)
         {
             gettimeofday(&now, NULL); 
             diff = difftime(target, now.tv_sec);

@@ -82,10 +82,12 @@ bool OMXThread::Create()
 
   m_bStop    = false;
   m_running = true;
-
   pthread_create(&m_thread, &m_tattr, &OMXThread::Run, this);
 
   CLog::Log(LOGDEBUG, "%s::%s - Thread with id %d started\n", CLASSNAME, __func__, (int)m_thread);
+  
+  
+
   return true;
 }
 
