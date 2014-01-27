@@ -63,10 +63,10 @@ public:
 
 	SyncVideo(const SyncVideo&);
 	
-	SyncVideo(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1);
+	SyncVideo(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1, bool loop = false);
 	virtual ~SyncVideo();
 
-	int play(std::string video, time_t date);
+	int play();
 	void Process();
 	void Stop();
 
@@ -90,7 +90,10 @@ private:
 	float m_tileX;
 	float m_tileY;
 
-	void Init(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1);
+	bool m_loop = false;
+	bool m_isOver = false;
+
+	void Init(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1, bool loop = false);
 
 
 

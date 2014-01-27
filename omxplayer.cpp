@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
     sch.loadProgram(argv[4]);
     sch.run();
     cout << "OVER" << endl;
+
     // struct timeval now;
     // gettimeofday(&now, NULL); 
 
@@ -100,14 +101,15 @@ int main(int argc, char *argv[])
  //  // sleep(2);
 // CLog::Init("./");
 // CLog::Init("./");
-    // struct timeval now;
-    // gettimeofday(&now, NULL); 
+//     struct timeval now;
+//     gettimeofday(&now, NULL); 
 
-    // cout << "file " << argv[3] << endl;
-    // SyncVideo media(argv[3], now.tv_sec+5, now.tv_sec+30);
-    // media.Create();
+//     cout << "file " << argv[3] << endl;
+//     SyncVideo media(argv[3], now.tv_sec+15, now.tv_sec+30);
+//     media.Create();
 
-    // sleep(10);
+//     media.StopThread();
+//     cout << "fin" << endl;
 }
 
 

@@ -14,7 +14,7 @@ public:
 	SchedulerMedia();
 	~SchedulerMedia();
 
-	void addMedia(std::string path, std::string start, std::string end);
+	void addMedia(std::string path, std::string start, std::string end, bool loop);
 
 	void run();
 	

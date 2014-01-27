@@ -25,9 +25,9 @@ SyncVideo::SyncVideo(const SyncVideo& vid)
 
 SyncVideo::SyncVideo(std::string path, time_t dateStart, time_t dateEnd, 
   float wallWidth, float wallHeight, float tileWidth, float tileHeight, 
-  float tileX, float tileY)
+  float tileX, float tileY, bool loop)
 {
-  Init(path, dateStart, dateEnd, wallWidth, wallHeight, tileWidth, tileHeight, tileX, tileY);
+  Init(path, dateStart, dateEnd, wallWidth, wallHeight, tileWidth, tileHeight, tileX, tileY, loop);
 }
 
 
@@ -35,7 +35,7 @@ SyncVideo::SyncVideo(std::string path, time_t dateStart, time_t dateEnd,
 
 void SyncVideo::Init(std::string path, time_t dateStart, time_t dateEnd, 
   float wallWidth, float wallHeight, float tileWidth, float tileHeight, 
-  float tileX, float tileY)
+  float tileX, float tileY, bool loop)
 {
   m_filename = path;
   m_dateStart = dateStart;
@@ -49,12 +49,14 @@ void SyncVideo::Init(std::string path, time_t dateStart, time_t dateEnd,
 
   m_tileX = tileX;
   m_tileY = tileY;
+
+  m_loop = loop;
 }
 void SyncVideo::Process()
 {
   CLog::Log(1, "Process");
   // cout << "test video" << endl; 
-  play(m_filename, m_dateStart);
+  play();
 }
 
 
@@ -394,7 +396,7 @@ bool SyncVideo::omxplayer_remap_wanted(void)
 
 
 
-int SyncVideo::play(std::string video, time_t date)
+int SyncVideo::play()
 {
 signal(SIGINT, sig_handler);
 
@@ -446,6 +448,12 @@ signal(SIGINT, sig_handler);
   const int boost_on_downmix_opt = 0x200;
   const int tile_code_opt = 0x300;
   const int frame_size_opt = 0x301;
+
+  //LOOP
+  double loop_offset     = 0.0;
+  double last_packet_pts = 0.0;
+  double last_packet_dts = 0.0;
+  double last_packet_duration = 0.0;
 
   
  //  int c;
@@ -591,7 +599,6 @@ signal(SIGINT, sig_handler);
     }
   }
 
-  m_filename = video;
 
   auto PrintFileNotFound = [](const std::string& path)
   {
@@ -650,6 +657,12 @@ signal(SIGINT, sig_handler);
 
   if(m_dump_format)
     goto do_exit;
+
+  //LOOP
+  if(m_loop && !m_omx_reader.CanSeek()) {
+    printf("Looping requested on an input that doesn't support seeking\n");
+    goto do_exit;
+  }
 
   m_bMpeg         = m_omx_reader.IsMpegVideo();
   m_has_video     = m_omx_reader.VideoStreamCount();
@@ -799,6 +812,7 @@ signal(SIGINT, sig_handler);
 
     if(SyncVideo::g_abort)
       goto do_exit;
+
 // #if WANT_KEYS
 //     int ch[8];
 //     int chnum = 0;
@@ -1023,10 +1037,71 @@ signal(SIGINT, sig_handler);
              m_player_audio.GetDelay(), m_player_video.GetCached(), m_player_audio.GetCached());
     }
 
+
+
+    //DEBUT LOOP
+    if(m_loop && m_omx_reader.IsEof() && !m_omx_pkt && m_isOver) {
+      m_isOver = false;
+      CLog::Log(LOGINFO, "EOF detected; looping requested");
+      if(m_omx_reader.SeekTime(0, true, &startpts)) {
+        m_omx_pkt = m_omx_reader.Read();
+        if(m_omx_pkt && last_packet_pts != DVD_NOPTS_VALUE) {
+          CLog::Log(LOGDEBUG, "Using last packet's PTS value for loop-offset: %.0f + %.0f", last_packet_pts, last_packet_duration);
+          loop_offset = last_packet_pts + last_packet_duration;
+        }
+        else if(m_omx_pkt && last_packet_dts != DVD_NOPTS_VALUE) {
+          CLog::Log(LOGDEBUG, "Using last packet's DTS value for loop-offset: %.0f + %.0f", last_packet_dts, last_packet_duration);
+          loop_offset = last_packet_dts + last_packet_duration;
+        }
+      }
+    }
+
+    if(m_loop && m_omx_pkt) {
+      if(m_omx_pkt->pts != DVD_NOPTS_VALUE) {
+        if(m_omx_pkt->pts < loop_offset) {
+          CLog::Log(LOGDEBUG, "Applying loop-offset to packet's PTS %.0f->%.0f", m_omx_pkt->pts, m_omx_pkt->pts + loop_offset);
+          m_omx_pkt->pts += loop_offset;
+        }
+        if(m_omx_pkt->pts > last_packet_pts)
+          last_packet_pts = m_omx_pkt->pts;
+      }
+      if(m_omx_pkt->dts != DVD_NOPTS_VALUE) {
+        if(m_omx_pkt->dts < loop_offset) {
+          CLog::Log(LOGDEBUG, "Applying loop-offset to packet's DTS %.0f->%.0f", m_omx_pkt->dts, m_omx_pkt->dts + loop_offset);
+          m_omx_pkt->dts += loop_offset;
+        }
+        if(m_omx_pkt->dts > last_packet_dts)
+          last_packet_dts = m_omx_pkt->dts;
+      }
+      last_packet_duration = m_omx_pkt->duration;
+    }
+    //FIN LOOP
+
+
+
+
+
+
+
     if(m_omx_reader.IsEof() && !m_omx_pkt)
     {
       if (!m_player_audio.GetCached() && !m_player_video.GetCached())
-        break;
+      {
+        if(m_loop)
+        {
+          cout << "abort ABORT !!" << endl;
+          m_isOver = true;
+          if(m_has_audio)
+            m_player_audio.WaitCompletion();
+          else if(m_has_video)
+            m_player_video.WaitCompletion();
+
+
+        }else
+        {
+          break;
+        }
+      }
 
       // Abort audio buffering, now we're on our own
       if (m_buffer_empty)
@@ -1054,7 +1129,7 @@ signal(SIGINT, sig_handler);
         if(m_av_clock->OMXIsPaused())
         {
           printf("en attente\n");
-          m_timer.SleepUntilTime(date);
+          m_timer.SleepUntilTime(m_dateStart);
           m_av_clock->OMXResume();
           printf("GO\n");
           m_buffer_empty = false;
@@ -1125,10 +1200,13 @@ do_exit:
 
   if(!m_stop && !SyncVideo::g_abort)
   {
+    cout << "WAIT" << endl;
     if(m_has_audio)
       m_player_audio.WaitCompletion();
     else if(m_has_video)
       m_player_video.WaitCompletion();
+
+    cout << "WAIT OVER" << endl;
   }
 
   if(m_has_video && m_refresh && tv_state.display.hdmi.group && tv_state.display.hdmi.mode)

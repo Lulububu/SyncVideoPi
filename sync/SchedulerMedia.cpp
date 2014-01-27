@@ -5,7 +5,7 @@ SchedulerMedia::SchedulerMedia()
 }
 SchedulerMedia::~SchedulerMedia(){}
 
-void SchedulerMedia::addMedia(std::string path, std::string start, std::string end)
+void SchedulerMedia::addMedia(std::string path, std::string start, std::string end, bool loop)
 {
 	struct tm tm;
 	// tm_isdst correspond à l'heure d'été. -1 laisse la fonction choisir.
@@ -16,7 +16,7 @@ void SchedulerMedia::addMedia(std::string path, std::string start, std::string e
 	strptime(end.c_str(), "%Y/%m/%d/%H:%M:%S", &(tm));
 	time_t end_t = mktime(&tm);
 
-	m_program.push(new SyncVideo(path, start_t, end_t, m_wallWidth, m_wallHeight, m_tileWidth, m_tileHeight, m_tileX, m_tileY));
+	m_program.push(new SyncVideo(path, start_t, end_t, m_wallWidth, m_wallHeight, m_tileWidth, m_tileHeight, m_tileX, m_tileY, loop));
 }
 
 void SchedulerMedia::run()
@@ -89,13 +89,15 @@ void SchedulerMedia::loadProgram(std::string configPath)
 {
 	std::ifstream infile(configPath);
 
-	string path, dateStart, dateEnd;
-	while (infile >> path >> dateStart >> dateEnd)
+	string path, dateStart, dateEnd, loop, line;
+	while (getline(infile, line))
 	{
-		if(path.at(0) != '#')
+		istringstream parser(line);
+		
+		if((parser >> path >> dateStart >> dateEnd >> loop) && path.at(0) != '#')
 		{
-			cout <<"file " <<  path << " start " << dateStart << " end " << dateEnd << endl;
-			addMedia(path, dateStart, dateEnd);
+			cout <<"file " <<  path << " start " << dateStart << " end " << dateEnd << " loop " << loop << endl;
+			addMedia(path, dateStart, dateEnd, (loop == "LOOP"));
 		}
 	}
 
