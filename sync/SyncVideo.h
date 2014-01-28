@@ -54,9 +54,10 @@ extern "C" {
 #include <utility>
 
 #include "sync/Timer.h"
+#include "sync/SyncMedia.h"
 
 
-class SyncVideo: public OMXThread
+class SyncVideo: public SyncMedia
 {
 public:
 	SyncVideo();
@@ -66,38 +67,29 @@ public:
 	SyncVideo(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1, bool loop = false);
 	virtual ~SyncVideo();
 
-	int play();
-	void Process();
-	void Stop();
 
+	
 	bool isOver();
 
   	static volatile sig_atomic_t g_abort;
 
-  	time_t m_dateStart;
-	time_t m_dateEnd;
+  	// Interface from SyncMedia
+	void Run();
+	TypeMedia GetType();
+	void Stop();
+
+  	
 
 private:
-
-	Timer m_timer;
-
-	float m_wallWidth;
-	float m_wallHeight;
-
-	float m_tileWidth;
-	float m_tileHeight;
-
-	float m_tileX;
-	float m_tileY;
 
 	bool m_loop = false;
 	bool m_isOver = false;
 
 	void Init(std::string path, time_t dateStart, time_t dateEnd, float wallWidth = -1, float wallHeight = -1, float tileWidth = -1, float tileHeight = -1, float tileX = -1, float tileY = -1, bool loop = false);
+	int play();
+	void Process();
 
-
-
-	std::string m_filename;
+	
 
 	typedef enum {CONF_FLAGS_FORMAT_NONE, CONF_FLAGS_FORMAT_SBS, CONF_FLAGS_FORMAT_TB } FORMAT_3D_T;
 	enum PCMChannels  *m_pChannelMap        = NULL;

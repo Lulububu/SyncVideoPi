@@ -14,16 +14,20 @@ public:
 	SchedulerMedia();
 	~SchedulerMedia();
 
-	void addMedia(std::string path, std::string start, std::string end, bool loop);
+	void addMedia(std::string path, std::string start, std::string end, bool loop, string type);
 
 	void run();
 	
 	void loadScreenConfig(std::string configPath);
 	void loadProgram(std::string configPath);
 
+	static volatile sig_atomic_t m_run;
+	// static Timer m_timer;
+
+
 private:
-	std::queue<SyncVideo*> m_program;
-	std::queue<SyncVideo*> m_programOld;
+	std::queue<SyncMedia*> m_program;
+	std::queue<SyncMedia*> m_programOld;
 
 	float m_wallWidth;
 	float m_wallHeight;
@@ -34,8 +38,11 @@ private:
 	float m_tileX;
 	float m_tileY;
 
+	Timer m_timer;
+	
 	void runNext();
 	void deleteOldMedia();
+	void deleteAllMedia();
 
 };
 

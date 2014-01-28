@@ -17,6 +17,7 @@ SyncVideo::SyncVideo()
 SyncVideo::~SyncVideo()
 {}
 
+
 SyncVideo::SyncVideo(const SyncVideo& vid)
 {
   Init(vid.m_filename, vid.m_dateStart, vid.m_dateEnd, 
@@ -63,11 +64,22 @@ void SyncVideo::Process()
 void SyncVideo::Stop()
 {
   m_stop = true;
+  SyncVideo::g_abort = true;
 }
 
 bool SyncVideo::isOver()
 {
   return m_stop;
+}
+
+void SyncVideo::Run()
+{
+  Create();
+}
+
+SyncMedia::TypeMedia SyncVideo::GetType()
+{
+  return TYPE_VIDEO;
 }
 
 void SyncVideo::restore_termios()
@@ -82,12 +94,12 @@ void SyncVideo::restore_fl()
 }
 //#endif /* WANT_KEYS */
 
-void sig_handler(int s)
-{
-  printf("strg-c catched\n");
-  signal(SIGINT, SIG_DFL);
-  SyncVideo::g_abort = true;
-}
+// void sig_handler(int s)
+// {
+//   printf("strg-c catched\n");
+//   signal(SIGINT, SIG_DFL);
+//   SyncVideo::g_abort = true;
+// }
 
 void SyncVideo::print_usage()
 {
@@ -398,7 +410,7 @@ bool SyncVideo::omxplayer_remap_wanted(void)
 
 int SyncVideo::play()
 {
-signal(SIGINT, sig_handler);
+// signal(SIGINT, sig_handler);
 
 #if WANT_KEYS
   if (isatty(STDIN_FILENO))
