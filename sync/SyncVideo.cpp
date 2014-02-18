@@ -64,7 +64,7 @@ void SyncVideo::Process()
 void SyncVideo::Stop()
 {
   m_stop = true;
-  SyncVideo::g_abort = true;
+  // SyncVideo::g_abort = true;
 }
 
 bool SyncVideo::isOver()
@@ -411,7 +411,7 @@ bool SyncVideo::omxplayer_remap_wanted(void)
 int SyncVideo::play()
 {
 // signal(SIGINT, sig_handler);
-
+bool m_first = true;
 #if WANT_KEYS
   if (isatty(STDIN_FILENO))
   {
@@ -579,6 +579,10 @@ int SyncVideo::play()
  //    }
  //  }
 
+  
+
+  
+
 
 //changement de taille ICI
   if(m_wallWidth > 0 && m_wallHeight > 0)
@@ -675,6 +679,54 @@ int SyncVideo::play()
     printf("Looping requested on an input that doesn't support seeking\n");
     goto do_exit;
   }
+
+  struct timeval now;
+  gettimeofday(&now, NULL);
+
+  //start date is over and we can navigate through the stream
+  if(m_dateStart < now.tv_sec && m_omx_reader.CanSeek())
+  {
+
+    if(m_omx_reader.GetStreamLength() < 15000)
+    {
+      
+      struct tm * timeinfo;
+      char buffer [80];
+
+      timeinfo = localtime (&(m_dateStart));
+      strftime (buffer,80," %I:%M:%S%p.",timeinfo);
+      printf("previous time %s\n", buffer);
+
+      m_seek_pos = 0;
+      m_dateStart = now.tv_sec + 15 + m_omx_reader.GetStreamLength()/1000 - ((now.tv_sec+15)%(m_omx_reader.GetStreamLength()/1000));
+      
+
+      timeinfo = localtime (&(m_dateStart));
+      strftime (buffer,80," %I:%M:%S%p.",timeinfo);
+      printf("after time %s\n", buffer);
+
+
+    }else
+    {
+      //but there is still some video to play (with a safety)
+      if(m_dateEnd > now.tv_sec + 15)
+      {
+        printf("Start on the go\n");
+        m_seek_pos = now.tv_sec - m_dateStart + 15;
+
+        if(m_seek_pos > m_omx_reader.GetStreamLength()/1000 && m_loop)
+        {
+          printf("seekpos %i\n", m_seek_pos);
+          printf("duration %i\n", m_omx_reader.GetStreamLength());
+          m_seek_pos = m_seek_pos % (m_omx_reader.GetStreamLength()/1000);
+          printf("new seekpos %i\n", m_seek_pos);
+        }
+
+        m_dateStart = now.tv_sec + 15;
+      }
+    }
+  }
+
 
   m_bMpeg         = m_omx_reader.IsMpegVideo();
   m_has_video     = m_omx_reader.VideoStreamCount();
@@ -808,6 +860,8 @@ int SyncVideo::play()
 
   if (! m_quiet)
     PrintSubtitleInfo();
+
+
 
   while(!m_stop)
   {
@@ -1055,39 +1109,17 @@ int SyncVideo::play()
     if(m_loop && m_omx_reader.IsEof() && !m_omx_pkt && m_isOver) {
       m_isOver = false;
       CLog::Log(LOGINFO, "EOF detected; looping requested");
-      if(m_omx_reader.SeekTime(0, true, &startpts)) {
-        m_omx_pkt = m_omx_reader.Read();
-        if(m_omx_pkt && last_packet_pts != DVD_NOPTS_VALUE) {
-          CLog::Log(LOGDEBUG, "Using last packet's PTS value for loop-offset: %.0f + %.0f", last_packet_pts, last_packet_duration);
-          loop_offset = last_packet_pts + last_packet_duration;
-        }
-        else if(m_omx_pkt && last_packet_dts != DVD_NOPTS_VALUE) {
-          CLog::Log(LOGDEBUG, "Using last packet's DTS value for loop-offset: %.0f + %.0f", last_packet_dts, last_packet_duration);
-          loop_offset = last_packet_dts + last_packet_duration;
-        }
-      }
+      printf("RESTART !!\n");
+      m_incr = -DBL_MAX;
+      m_first= true;
+      
+      struct timeval now;
+      gettimeofday(&now, NULL); 
+      m_dateStart += (m_omx_reader.GetStreamLength()/1000) + 2 - m_seek_pos;
+      printf("length of stream %i\n", m_omx_reader.GetStreamLength()/1000);
+      printf("seek %i\n", m_seek_pos);
+      m_seek_pos = 0;
     }
-
-    if(m_loop && m_omx_pkt) {
-      if(m_omx_pkt->pts != DVD_NOPTS_VALUE) {
-        if(m_omx_pkt->pts < loop_offset) {
-          CLog::Log(LOGDEBUG, "Applying loop-offset to packet's PTS %.0f->%.0f", m_omx_pkt->pts, m_omx_pkt->pts + loop_offset);
-          m_omx_pkt->pts += loop_offset;
-        }
-        if(m_omx_pkt->pts > last_packet_pts)
-          last_packet_pts = m_omx_pkt->pts;
-      }
-      if(m_omx_pkt->dts != DVD_NOPTS_VALUE) {
-        if(m_omx_pkt->dts < loop_offset) {
-          CLog::Log(LOGDEBUG, "Applying loop-offset to packet's DTS %.0f->%.0f", m_omx_pkt->dts, m_omx_pkt->dts + loop_offset);
-          m_omx_pkt->dts += loop_offset;
-        }
-        if(m_omx_pkt->dts > last_packet_dts)
-          last_packet_dts = m_omx_pkt->dts;
-      }
-      last_packet_duration = m_omx_pkt->duration;
-    }
-    //FIN LOOP
 
 
 
@@ -1116,8 +1148,14 @@ int SyncVideo::play()
       }
 
       // Abort audio buffering, now we're on our own
-      if (m_buffer_empty)
+      if (m_buffer_empty && m_first)
+      {
+        printf("en attente (empty buffer)\n");
+        m_timer.SleepUntilTime(m_dateStart);
+        printf("GO\n");
         m_av_clock->OMXResume();
+        m_first = false;
+      }
 
       OMXClock::OMXSleep(10);
       continue;
@@ -1136,6 +1174,7 @@ int SyncVideo::play()
           clock_gettime(CLOCK_REALTIME, &starttime);
         }
       }
+      // printf("A\n");
       if(m_player_audio.GetDelay() > (AUDIO_BUFFER_SECONDS * 0.75f) && m_buffer_empty)
       {
         if(m_av_clock->OMXIsPaused())

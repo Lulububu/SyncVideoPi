@@ -24,6 +24,8 @@
 
 #include "sync/TestThread.h"
 
+#include "sync/SyncImage.h"
+
 int main(int argc, char *argv[])
 {
     
@@ -32,84 +34,30 @@ int main(int argc, char *argv[])
     sch.loadProgram(argv[4]);
     sch.run();
     cout << "OVER" << endl;
+    sleep(10);
+
+    // SyncImage img(argv[3], 0, 0);
+    // img.Load();
+    // img.Display();
+
+    // sleep(10);
 
     // struct timeval now;
     // gettimeofday(&now, NULL); 
 
-    // struct tm * timeinfo;
-    // char buffer [80];
+    // cout << "file " << argv[3] << endl;
+    // // cout << "wallW " << stoi(argv[4]) << "wallH " << stoi(argv[5])  << endl;
+    // SyncImage media(argv[3], now.tv_sec, now.tv_sec+15, 100, 100, 100, 100, 0, 0);
+    
+    // media.Load();
+    // media.Display();
 
-    // timeinfo = localtime (&(now.tv_sec));
-    // strftime (buffer,80,"Now it's %I:%M%p.",timeinfo);
-    // cout << buffer << endl;
+    // // media.Create();
+    // // media.StopThread();
+    
+    // sleep(10);
+    // cout << "fin" << endl;
 
-    // int tempsinit = 10;
-    // int temps1 = tempsinit+15;
-    // int temps2 = temps1 + 15;
-
-    // SyncVideo media("videos/Castle.2009.S06E12.FASTSUB.VOSTFR.720p.HDTV.x264-PROTEiGON.mkv", now.tv_sec+tempsinit, now.tv_sec + temps1);
-    // media.Create();
-    // cout << "launch 1" << endl;
-
-    // SyncVideo media2("videos/Castle.2009.S06E12.FASTSUB.VOSTFR.720p.HDTV.x264-PROTEiGON.mkv", now.tv_sec+temps1, now.tv_sec + temps2);
-    // media2.Create();
-    // cout << "launch 2" << endl;
-
-    // Timer timer;
-    // cout << "sleep 1" << endl;
-    // timer.SleepUntilTime(now.tv_sec + temps1);
-    // cout << "fin sleep 1" << endl;
-    // media.stop();
-    // cout << "stop 1" << endl;
-
-
-    // cout << "sleep 2" << endl;
-    // timer.SleepUntilTime(now.tv_sec + temps2);
-    // cout << "fin sleep 2" << endl;
-    // media2.stop();
-    // cout << "stop 2" << endl;
-
-    // media.StopThread();
-    // media2.StopThread();
-
- // //  SyncVideo vid;
- //  struct tm tm;
- // //  // tm_isdst correspond à l'heure d'été. -1 laisse la fonction choisir.
- //  tm.tm_isdst = -1;
-  
- // //  //printf("%s", argv[4]);
- //  strptime(argv[4], "%Y/%m/%d/%H:%M:%S", &(tm));
- //  time_t target = mktime(&tm);
-  
-	// // vid.play(argv[3], target);
-	// // // play(argc, argv, "test.h264");
- // //  // vid.test();
- //  SyncVideo vid1, vid2;
- //  vid1.init(argv[3], target);
- //  vid2.init(argv[3], target+10);
-
- //  vid1.Create();
- //  vid2.Create();
- //  sleep(10);
-
- //  vid1.stop();
-
-
- //  // sleep(5);
- //  vid1.StopThread();
- //  vid2.StopThread();
- //  // sleep(2);
-// CLog::Init("./");
-// CLog::Init("./");
-//     struct timeval now;
-//     gettimeofday(&now, NULL); 
-
-//     cout << "file " << argv[3] << endl;
-//     SyncVideo media(argv[3], now.tv_sec+15, now.tv_sec+30);
-//     media.Create();
-
-//     media.StopThread();
-//     cout << "fin" << endl;
 }
 
 

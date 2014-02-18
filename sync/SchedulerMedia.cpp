@@ -1,19 +1,19 @@
 #include "SchedulerMedia.h"
 
-// volatile sig_atomic_t SchedulerMedia::m_run = false;
-// // Timer SchedulerMedia::m_timer;
+volatile sig_atomic_t SchedulerMedia::m_run = false;
+// Timer SchedulerMedia::m_timer;
 
-// void sig_handler(int s)
-// {
-//   printf("strg-c catched\n");
-//   signal(SIGINT, SIG_DFL);
-//   SchedulerMedia::m_run = false;
-//   // SchedulerMedia::m_timer.Stop();
-// }
+void sig_handler(int s)
+{
+  printf("strg-c catched\n");
+  signal(SIGINT, SIG_DFL);
+  SchedulerMedia::m_run = false;
+  // SchedulerMedia::m_timer.Stop();
+}
 
 SchedulerMedia::SchedulerMedia()
 {
-	// signal(SIGINT, sig_handler);
+	signal(SIGINT, sig_handler);
 }
 
 SchedulerMedia::~SchedulerMedia(){}
@@ -30,25 +30,37 @@ void SchedulerMedia::addMedia(std::string path, std::string start, std::string e
 	strptime(end.c_str(), "%Y/%m/%d/%H:%M:%S", &(tm));
 	time_t end_t = mktime(&tm);
 
-	if(type == "VIDEO")
-		m_program.push(new SyncVideo(path, start_t, end_t, m_wallWidth, m_wallHeight, m_tileWidth, m_tileHeight, m_tileX, m_tileY, loop));
-	else if(type == "IMAGE")
-		cout << "creation image" << end;
+	struct timeval now;
+    gettimeofday(&now, NULL); 
+    int diff = difftime(end_t, now.tv_sec);
+    if(diff > 0)
+    {
+    	cout << "in time" << endl;
+    	if(type == "VIDEO")
+			m_program.push(new SyncVideo(path, start_t, end_t, m_wallWidth, m_wallHeight, m_tileWidth, m_tileHeight, m_tileX, m_tileY, loop));
+		else if(type == "IMAGE")
+			m_program.push(new SyncImage(path, start_t, end_t, m_wallWidth, m_wallHeight, m_tileWidth, m_tileHeight, m_tileX, m_tileY));
+    }else{
+    	cout << "too late" << endl;
+    }
+
+	
 }
 
 void SchedulerMedia::run()
 {
-	// SchedulerMedia::m_run = true;
+	SchedulerMedia::m_run = true;
 
-	while(!m_program.empty())
+	while(!m_program.empty() && m_run)
 	{
 		runNext();
 		//deleteOldMedia();
 	}
 	cout << "program empty" << endl;
 	Timer m_timer;
-	if(!m_programOld.empty())
+	if(!m_programOld.empty() && m_run)
 	{
+		cout << "wait to finish" << endl;
 		m_timer.SleepUntilTime(m_programOld.back()->m_dateEnd + 1);
 	}
 	//deleteAllMedia();
@@ -61,16 +73,13 @@ void SchedulerMedia::runNext()
 		Timer m_timer;
 		SyncMedia* media = m_program.front();
 		m_program.pop();
-		m_timer.SleepUntilTime(media->m_dateStart - 5);
+		m_timer.SleepUntilTime(media->m_dateStart - 10);
 		cout << "create" << endl;
 		media->Run();
 
 		cout << "push" << endl;
 		m_programOld.push(media);
 
-		// timer.SleepUntilTime(media->m_dateEnd);
-
-		// media->stop();
 	}
 }
 
@@ -111,12 +120,20 @@ void SchedulerMedia::loadProgram(std::string configPath)
 	while (getline(infile, line))
 	{
 		istringstream parser(line);
-		
-		if((parser >> type >> path >> dateStart >> dateEnd >> loop) && path.at(0) != '#')
+
+		if((parser >> type) && type.at(0) != '#')
 		{
-			cout <<"type " << type << " file " <<  path << " start " << dateStart << " end " << dateEnd << " loop " << loop << endl;
-			addMedia(path, dateStart, dateEnd, (loop == "LOOP"), type);
+			if(type == "VIDEO" && (parser >> path >> dateStart >> dateEnd >> loop) )
+			{
+				cout <<"type " << type << " file " <<  path << " start " << dateStart << " end " << dateEnd << " loop " << loop << endl;
+				addMedia(path, dateStart, dateEnd, (loop == "LOOP"), type);
+			}else if(type == "IMAGE" && (parser >> path >> dateStart >> dateEnd) )
+			{
+				cout <<"type " << type << " file " <<  path << " start " << dateStart << " end " << dateEnd << endl;
+				addMedia(path, dateStart, dateEnd, false, type);
+			}
 		}
+		
 	}
 
 }
@@ -144,7 +161,7 @@ void SchedulerMedia::deleteAllMedia()
 	{
 		m_programOld.front()->Stop();
 		m_programOld.front()->StopThread();
-		// delete (m_programOld.front());
+		delete (m_programOld.front());
 		m_programOld.pop();
 	}
 
@@ -152,7 +169,7 @@ void SchedulerMedia::deleteAllMedia()
 	{
 		m_program.front()->Stop();
 		m_program.front()->StopThread();
-		// delete (m_programOld.front());
+		delete (m_programOld.front());
 		m_program.pop();
 	}
 

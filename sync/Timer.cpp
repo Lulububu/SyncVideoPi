@@ -20,11 +20,11 @@ bool Timer::SleepUntilTime(time_t target)
   	char buffer [80];
 
     timeinfo = localtime (&(now.tv_sec));
-  	strftime (buffer,80,"Now it's %I:%M%p.",timeinfo);
+  	strftime (buffer,80,"Now it's %I:%M:%S%p.",timeinfo);
   	cout << buffer << endl;
 
   	timeinfo = localtime (&(target));
-  	strftime (buffer,80,"target is %I:%M%p.",timeinfo);
+  	strftime (buffer,80,"target is %I:%M:%S%p.",timeinfo);
   	cout << buffer << endl;
 
     int diff = difftime(target, now.tv_sec);

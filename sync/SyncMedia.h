@@ -1,6 +1,9 @@
+#ifndef SYNCMEDIA_H
+#define SYNCMEDIA_H
 
 
-
+#include "OMXThread.h"
+#include "sync/Timer.h"
 
 class SyncMedia : public OMXThread
 {
@@ -36,3 +39,5 @@ protected:
 
 
 };
+
+#endif

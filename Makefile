@@ -9,11 +9,13 @@ OT_LIBS = -lpwtilemap -lpwutil
 CFLAGS+=-std=c++11 -DSTANDALONE -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -DTARGET_POSIX -D_LINUX -fPIC -DPIC -D_REENTRANT -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DHAVE_CMAKE_CONFIG -D__VIDEOCORE4__ -U_FORTIFY_SOURCE -Wall -DHAVE_OMXLIB -DUSE_EXTERNAL_FFMPEG  -DHAVE_LIBAVCODEC_AVCODEC_H -DHAVE_LIBAVUTIL_OPT_H -DHAVE_LIBAVUTIL_MEM_H -DHAVE_LIBAVUTIL_AVUTIL_H -DHAVE_LIBAVFORMAT_AVFORMAT_H -DHAVE_LIBAVFILTER_AVFILTER_H -DHAVE_LIBSWRESAMPLE_SWRESAMPLE_H -DOMX -DOMX_SKIP64BIT -ftree-vectorize -DUSE_EXTERNAL_OMX -DTARGET_RASPBERRY_PI -DUSE_EXTERNAL_LIBBCM_HOST
 
 LDFLAGS+=-L./ -lc -lEGL -lGLESv2 -lbcm_host -lopenmaxil -lfreetype -lz -Lffmpeg_compiled/usr/local/lib/ $(OT_LIBS)
+
 INCLUDES+=-I./ -Ilinux -Iffmpeg_compiled/usr/local/include/ $(OT_FLAGS) $(GLIB_FLAGS)
 
 DIST ?= /home/erwan/rpi/nfs
 
-SRC=linux/XMemUtils.cpp \
+SRC=\
+	linux/XMemUtils.cpp \
 		utils/log.cpp \
 		DynamicDll.cpp \
 		utils/PCMRemap.cpp \
@@ -37,11 +39,28 @@ SRC=linux/XMemUtils.cpp \
 		SubtitleRenderer.cpp \
 		Unicode.cpp \
 		Srt.cpp \
+		sync/Timer.cpp \
+		sync/SyncVideo.cpp \
+		sync/SchedulerMedia.cpp \
+		sync/TestThread.cpp \
+		sync/SyncImage.cpp \
+		sync/pngTools/glDebug.cpp\
+		sync/pngTools/Texture2D.cpp\
+		sync/pngTools/pngread.cpp\
+		sync/pngTools/rpi2d.cpp\
+		sync/imageTools/io/logger_console.cpp \
+		sync/imageTools/jpeg/JPEGOpenMax.cpp \
+		sync/imageTools/openmax/Event.cpp \
+		sync/imageTools/openmax/OMXComponent.cpp \
+		sync/imageTools/openmax/OMXCore.cpp \
+		sync/imageTools/platform/PlatformRPI.cpp \
+		sync/imageTools/platform/PosixLocker.cpp \
+		sync/imageTools/video/VideoObjects/VideoObjectCommon.cpp \
+		sync/imageTools/video/VideoObjects/VideoObjectGLES2.cpp \
+		sync/imageTools/video/VideoObjects/VideoObjectGLES2_EGL.cpp \
 		omxplayer.cpp \
-		sync/Timer.cpp\
-		sync/SyncVideo.cpp\
-		sync/SchedulerMedia.cpp\
-		sync/TestThread.cpp\
+
+
 
 OBJS+=$(filter %.o,$(SRC:.cpp=.o))
 
@@ -55,7 +74,7 @@ list_test:
 	$(CXX) -O3 -o list_test list_test.cpp
 
 videosync.bin: $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $(OBJS) -lrt -pthread -lavutil -lavcodec -lavformat -lswscale -lswresample -lpcre -lvchiq_arm -lvcos
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) -lrt -pthread -lavutil -lavcodec -lavformat -lswscale -lpng -ljpeg -lswresample -lpcre -lvchiq_arm -lvcos
 	#arm-unknown-linux-gnueabi-strip omxplayer.bin
 
 #-include $(OBJS:.o=.d)
@@ -89,3 +108,6 @@ dist: videosync.bin
 	cp -a ffmpeg_compiled/usr/local/lib/*.so* $(DIST)/usr/lib/omxplayer/
 	#tar -czf omxplayer-dist.tar.gz $(DIST)
 
+pack: videosync.bin
+	cp videosync.bin videosync install/
+	cp -a ffmpeg_compiled/usr/local/lib/*.so* install/ffmpeg_lib/

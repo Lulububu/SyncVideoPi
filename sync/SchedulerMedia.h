@@ -7,6 +7,7 @@
 
 #include "sync/Timer.h"
 #include "sync/SyncVideo.h"
+#include "sync/SyncImage.h"
 
 class SchedulerMedia
 {
@@ -38,7 +39,7 @@ private:
 	float m_tileX;
 	float m_tileY;
 
-	Timer m_timer;
+	// Timer m_timer;
 	
 	void runNext();
 	void deleteOldMedia();
