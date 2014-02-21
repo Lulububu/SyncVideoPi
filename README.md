@@ -72,7 +72,8 @@ Il faut ensuite attendre un certain temps avant que la synchronisation s'effectu
 
 ###NFS
 
-*Configuration serveur 
+*Configuration serveur
+
 Le paquet serveur NFS n'est pas présent sur la distribution Raspbian OS.
 Il faut l'installer à l'aide de :
 ```sudo apt-get install nfs-kernel-server```
@@ -92,6 +93,7 @@ sudo service nfs-kernel-server restart
 ```
 
 *Configuration client 
+
 Le paquet client NFS est présent par défaut sur la distribution Raspbian OS.
 Il faut tout d'abord créer un dossier qui servira de point de montage.
 
