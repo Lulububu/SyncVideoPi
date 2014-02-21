@@ -35,7 +35,6 @@ tileHeight      300
 
 tileX   0
 tileY   310
-
 ```
 
 *Configuration programmation
@@ -53,4 +52,19 @@ Une fois tout configurer, il ne reste plus qu'a exécuter le programme sur tous 
 ```videosync configScreen.cf programm.pr```
 
 ##Comment compiler
+Le code a été conçu pour être cross-compiler. Pour rendre le processus plus simple et ne pas avoir à copier toutes les librairies et header depuis le raspberry PI vers l'ordinateur compilant, nous allons monter l'ensemble le dossier racine du raspberry en NFS. Pour cela, il faut rajouter la ligne ```/ 10.0.0.0/24(rw,no_root_squash,async,no_subtree_check)``` dans le fichier ```/etc/export``` avec 10.0.0.0 le réseau correspondant. Ensuite, sur l'ordintaue devant compiler il faut monter le dossier comme ceci:
+```
+mkdir nfsFolder
+sudo mount -t nfs 10.0.0.1:/ nfsFolder
+```
+Il faut également récupérer les outils de cross compilation (sur le github de Raspberry Pi par exemple).
+Il faut ensuite modifier le fichier *Makefile.include* avec ses propres variables. Ainsi, il faut indiquer :
+*```BUILDROOT	:=/home/erwan/rpi/nfs``` avec /home/erwan/rpi/nfs étant le chemin d'accès vers le repertoire où est monté en NFS la racine du raspberry.
+*```TOOLCHAIN	:=/usr/local/bcm-gcc/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian``` avec le chemin d'accès vers l'outil de cross compilation
+*```HOST		:=arm-linux-gnueabihf``` pour indiquer le dossier contenant les exécutable de compilation
+
+Ensuite, il ne reste plus qu'à compiler avec :
+```sudo make dist```
+
+Il y aura probablement des problèmes de bibliothèques manquantes, mais il suffit de les installer au cas par cas sur le raspberry avec aptitude par exemple.
 
