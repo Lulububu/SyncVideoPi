@@ -5,11 +5,99 @@ Ce projet a pour but de fournir un système multi-écran basé sur des raspberry
 Pour utiliser ce programme, il faut passer par plusieurs étapes. Le système utiliser le réseau pour distribuer le programme et les médias. La première étape consiste donc à configurer le réseau. Le système repose sur la synchronisation temporelle, il faut donc installer et configurer NTP sur les raspberry. Le partage des médias est basé sur NFS, il faut donc le configurer. La dernière étape consiste à installer le programme en lui même et à le configurer.
 
 ###Le réseau
+Voici l'architecture que nous souhaitons obtenir (4 écrans):
+
+![architecture réseau](doc/img/architecture.png)
+
+La première chose à faire est de définir de manière statique les adresses IP de chaque Raspberry Pi.
+Il faut modifier le fichier : */etc/network/interfaces* 
+
+Voici les lignes qui doivent être présentes dans le fichier pour l'ordinateur 10.0.0.1 :
+
+```
+auto eth0
+iface eth0 inet static
+address 10.0.0.1
+netmask 255.255.255.0
+network 10.0.0.0
+broadcast 10.0.0.255
+```
+
+Une fois le fichier modifier il faut redémarrer l'interface eth0.
 
 ###NTP
+L'architecture que nous voulons obtenir est présentée dans le schéma précédent.
+Chaque client est connecté au serveur et à tous les autres clients.
+
+Les paquets NTP sont présents par défaut dans la distribution Raspbian utilisée sur les Raspberry Pi.
+Il ne reste plus qu'à modifier les fichiers de configuration afin d'obtenir l'architecture souhaitée.
+Le fichier en question est : */etc/ntp.conf*
+*Fichier serveur 
+```
+# Si l'on souhaite se synchroniser avec un serveur via internet
+server 0.debian.pool.ntp.org iburst
+
+# Les deux lignes suivantes permettent de définir l'heure locale comme l'heure de référence et donc pouvoir la partager.
+server 127.127.1.0 prefer iburst minpoll 4 maxpoll 4
+fudge 127.127.1.0 stratum 10
+```
+
+*Fichier client 
+```
+server 10.0.0.1 prefer iburst minpoll 4 maxpoll 4
+
+# Les lignes suivantes permettent de définir les pairs auxquels le client se connecte.
+# Ces lignes sont valables pour le client en 10.0.0.2, il y a une ligne à changer en fonction du client
+peer 10.0.0.3 minpoll 4 maxpoll 4
+peer 10.0.0.4 minpoll 4 maxpoll 4
+peer 10.0.0.5 minpoll 4 maxpoll 4
+```
+
+*Options utilisées 
+*iburst*			: en cas d'indisponibilité du serveur, ntp essaiera plusieurs fois avant d'abandonner. 
+*prefer* 			: le serveur est préféré vis à vis des autres serveurs.
+*minpoll/maxpoll* 	: interval entre chaque obtention de l'heure en puissance de 2, 4 <= poll <= 16. maxpoll = 4, demande de l'heure toutes les 16 secondes.
+
+*Utilitaires 
+*ntpq -pn* : permet de vérifier le décalage d'horloge par rapport au serveur.
+
+Une fois le fichier modifier il faut redémarrer sur chaque Raspberry les démons NTP à l'aide de :
+```sudo service ntp restart```
+
+Il faut ensuite attendre un certain temps avant que la synchronisation s'effectue. Si elle prend du temps, redémarrer les Raspberry Pi clients.
+
 
 ###NFS
 
+*Configuration serveur 
+Le paquet serveur NFS n'est pas présent sur la distribution Raspbian OS.
+Il faut l'installer à l'aide de :
+```sudo apt-get install nfs-kernel-server```
+
+Il faut à présent ajouter le chemin du dossier à partager dans le fichier : */etc/exports*
+
+```cheminDossierPartageServeur *(rw,all_squash,no_subtree_check,anonuid=1000,anongid=1000,sync)```
+
+Il faut ensuite lancer le démon rpcbind sur le serveur NFS à l'aide de :
+
+```sudo update-rc.d rpcbind enable```
+
+Enfin il faut relancer les démons que l'on vient de configurer à l'aide de :
+```
+sudo service rpcbind restart
+sudo service nfs-kernel-server restart
+```
+
+*Configuration client 
+Le paquet client NFS est présent par défaut sur la distribution Raspbian OS.
+Il faut tout d'abord créer un dossier qui servira de point de montage.
+
+Il suffit ensuite d'éditer le fichier : */etc/fstab* pour ajouter le montage.
+La ligne suivante est à ajouter :
+```adresseServeur:cheminDossierPartageServeur cheminPointMontageClient nfs rw, nolock,auto 0 0```
+
+Le montage à l'allumage n'est pas toujours automatique, il faut alors lancer sur chaque client la commande :
+```sudo mount -a```
 
 ###Le programme
 ####L'installation
