@@ -55,11 +55,13 @@ peer 10.0.0.5 minpoll 4 maxpoll 4
 ```
 
 *Options utilisées* 
+
 *iburst*			: en cas d'indisponibilité du serveur, ntp essaiera plusieurs fois avant d'abandonner. 
 *prefer* 			: le serveur est préféré vis à vis des autres serveurs.
 *minpoll/maxpoll* 	: interval entre chaque obtention de l'heure en puissance de 2, 4 <= poll <= 16. maxpoll = 4, demande de l'heure toutes les 16 secondes.
 
 *Utilitaires* 
+
 *ntpq -pn* : permet de vérifier le décalage d'horloge par rapport au serveur.
 
 Une fois le fichier modifier il faut redémarrer sur chaque Raspberry les démons NTP à l'aide de :
