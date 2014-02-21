@@ -32,7 +32,8 @@ Chaque client est connecté au serveur et à tous les autres clients.
 Les paquets NTP sont présents par défaut dans la distribution Raspbian utilisée sur les Raspberry Pi.
 Il ne reste plus qu'à modifier les fichiers de configuration afin d'obtenir l'architecture souhaitée.
 Le fichier en question est : */etc/ntp.conf*
-*Fichier serveur 
+
+*Fichier serveur*
 ```
 # Si l'on souhaite se synchroniser avec un serveur via internet
 server 0.debian.pool.ntp.org iburst
@@ -42,7 +43,7 @@ server 127.127.1.0 prefer iburst minpoll 4 maxpoll 4
 fudge 127.127.1.0 stratum 10
 ```
 
-*Fichier client 
+*Fichier client*
 ```
 server 10.0.0.1 prefer iburst minpoll 4 maxpoll 4
 
@@ -53,12 +54,12 @@ peer 10.0.0.4 minpoll 4 maxpoll 4
 peer 10.0.0.5 minpoll 4 maxpoll 4
 ```
 
-*Options utilisées 
+*Options utilisées* 
 *iburst*			: en cas d'indisponibilité du serveur, ntp essaiera plusieurs fois avant d'abandonner. 
 *prefer* 			: le serveur est préféré vis à vis des autres serveurs.
 *minpoll/maxpoll* 	: interval entre chaque obtention de l'heure en puissance de 2, 4 <= poll <= 16. maxpoll = 4, demande de l'heure toutes les 16 secondes.
 
-*Utilitaires 
+*Utilitaires* 
 *ntpq -pn* : permet de vérifier le décalage d'horloge par rapport au serveur.
 
 Une fois le fichier modifier il faut redémarrer sur chaque Raspberry les démons NTP à l'aide de :
