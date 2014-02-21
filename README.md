@@ -72,7 +72,7 @@ Il faut ensuite attendre un certain temps avant que la synchronisation s'effectu
 
 ###NFS
 
-*Configuration serveur
+*Configuration serveur*
 
 Le paquet serveur NFS n'est pas présent sur la distribution Raspbian OS.
 Il faut l'installer à l'aide de :
@@ -92,7 +92,7 @@ sudo service rpcbind restart
 sudo service nfs-kernel-server restart
 ```
 
-*Configuration client 
+*Configuration client*
 
 Le paquet client NFS est présent par défaut sur la distribution Raspbian OS.
 Il faut tout d'abord créer un dossier qui servira de point de montage.
@@ -112,11 +112,12 @@ Pour installer le programme, cloner le dépôt github, copier le dossier *instal
 ```scp -r install/ pi@piaddress:/home/pi/```
 
 Sur les raspberry:
-*```cd /home/pi/install```
-*```sudo ./install.sh```
+*```cd /home/pi/install```*
+*```sudo ./install.sh```*
 
 ####Utilisation
-*Configuration géométrie
+*Configuration géométrie*
+
 Une fois le programme installer sur chacun des raspberry, il faut configurer la gémoétrie. Pour chacun des écrans, il faut mesurer leur taille et leur position dans le mur. Il faut également connaître la taille du mur d'acran. il faut créer un fichier texte suivant l'exemple ci-dessous.
 ![géometrie écran](doc/img/mur.png)
 ```
@@ -130,7 +131,8 @@ tileX   0
 tileY   310
 ```
 
-*Configuration programmation
+*Configuration programmation*
+
 Pour indiquer à quelle heure les médias doivent s'afficher sur le mur d'écran, il faut indiquer le résultat attendu dans un fichier texte respectant ce format. 
 
 ```
